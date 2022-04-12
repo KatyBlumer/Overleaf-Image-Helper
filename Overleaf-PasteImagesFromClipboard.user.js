@@ -82,9 +82,8 @@ function checkAndCreateAssetsFolder(){
         const retry = setInterval(() => {
             console.log("Polling...")
             if (window._debug_editors === undefined) return
-            clearInterval(retry)
-            // get current editor instance
-            const editor = window._debug_editors[window._debug_editors.length -1]
+            console.log("Found editors");
+            clearInterval(retry);
             // Create assets folder
             checkAndCreateAssetsFolder();
         }, 1000)
@@ -104,13 +103,14 @@ document.querySelector('.ace_editor').addEventListener('paste', function(e){
                 var reader = new FileReader();
                 reader.readAsBinaryString(imageBlob);
                 reader.onloadend = function () {
-                    var  hash = CryptoJS.SHA256(reader.result).toString().substring(0,8);
+                    var hash = CryptoJS.MD5(reader.result).toString().substring(0,8);
                     console.log("Uploading image...")
                     uploadImage(imageBlob,hash);
                     _ide.editorManager.$scope.editor.sharejs_doc.ace.insert("\\begin{figure}[h!]\n\
 \t\\centering\n\
-\t\\includegraphics[width=0.66\\textwidth]{assets/" + hash + ".png}\n\
+\t\\includegraphics[width=0.9\\textwidth]{assets/" + hash + ".png}\n\
 \t\\caption{Caption}\n\
+\t\\label{fig:screenshot}\n\
 \\end{figure}"
                                                                            );
                     _ide.editorManager.$scope.editor.sharejs_doc.ace.selection.moveCursorBy(-1,1);
@@ -121,4 +121,31 @@ document.querySelector('.ace_editor').addEventListener('paste', function(e){
     } catch (e) {
         console.log(e);
     }}
-                                                      );
+);
+
+document.querySelector('.cm-content').addEventListener('paste', function(e){
+    console.log("Got paste!");
+    try {
+        // Handle the event
+        retrieveImageFromClipboardAsBlob(e, function(imageBlob){
+            // Image?
+            if(imageBlob){
+                checkAndCreateAssetsFolder();
+                var reader = new FileReader();
+                reader.readAsBinaryString(imageBlob);
+                reader.onloadend = function () {
+                    var hash = CryptoJS.SHA256(reader.result).toString().substring(0,8);
+                    console.log("Uploading image...")
+                    uploadImage(imageBlob,hash);
+                    _ide.editorManager.$scope.editor.sharejs_doc.cm6.dispatch(_ide.editorManager.$scope.editor.sharejs_doc.cm6.state.replaceSelection("\\begin{figure}[h!]\n\
+\t\\centering\n\
+\t\\includegraphics[width=0.66\\textwidth]{assets/" + hash + ".png}\n\
+\t\\caption{Caption}\n\
+\\end{figure}"));
+                };
+            }
+        })
+    } catch (e) {
+        console.log(e);
+    }}
+);
