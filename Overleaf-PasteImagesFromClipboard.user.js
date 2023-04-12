@@ -43,12 +43,12 @@ function retrieveImageFromClipboardAsBlob(pasteEvent, callback){
 }
 
 // Upload the image blob
-function uploadImage(imageBlob,hash){
+function uploadImage(imageBlob, fname){
     try{
         var xhr = new XMLHttpRequest();
         var url = document.location.pathname + "/upload?folder_id=" + _ide.fileTreeManager.findEntityByPath(assetsFolderName).id + "&_csrf=" + csrfToken;
         let formData = new FormData();
-        formData.append("qqfile", imageBlob, hash + ".png");
+        formData.append("qqfile", imageBlob, fname + ".png");
         xhr.open("POST", url, true);
         //xhr.setRequestHeader("Content-Type", "application/json");
         xhr.onreadystatechange = function () {
@@ -107,12 +107,12 @@ document.querySelector('.ace_editor').addEventListener('paste', function(e){
                 var reader = new FileReader();
                 reader.readAsBinaryString(imageBlob);
                 reader.onloadend = function () {
-                    var hash = CryptoJS.MD5(reader.result).toString().substring(0,8);
+                    var fname = new Date().toISOString();
                     console.log("Uploading image...")
-                    uploadImage(imageBlob,hash);
+                    uploadImage(imageBlob, fname);
                     _ide.editorManager.$scope.editor.sharejs_doc.ace.insert("\\begin{figure}[h!]\n\
 \t\\centering\n\
-\t\\includegraphics[width=0.9\\textwidth]{" + assetsFolderName + "/" + hash + ".png}\n\
+\t\\includegraphics[width=0.9\\textwidth]{" + assetsFolderName + "/" + fname + ".png}\n\
 \t\\caption{Caption}\n\
 \t\\label{fig:screenshot}\n\
 \\end{figure}"
@@ -138,12 +138,12 @@ document.querySelector('.cm-content').addEventListener('paste', function(e){
                 var reader = new FileReader();
                 reader.readAsBinaryString(imageBlob);
                 reader.onloadend = function () {
-                    var hash = CryptoJS.SHA256(reader.result).toString().substring(0,8);
+                    var fname = new Date().toISOString();
                     console.log("Uploading image...")
-                    uploadImage(imageBlob,hash);
+                    uploadImage(imageBlob, fname);
                     _ide.editorManager.$scope.editor.sharejs_doc.cm6.dispatch(_ide.editorManager.$scope.editor.sharejs_doc.cm6.state.replaceSelection("\\begin{figure}[h!]\n\
 \t\\centering\n\
-\t\\includegraphics[width=0.66\\textwidth]{" + assetsFolderName + "/" + hash + ".png}\n\
+\t\\includegraphics[width=0.66\\textwidth]{" + assetsFolderName + "/" + fname + ".png}\n\
 \t\\caption{Caption}\n\
 \\end{figure}"));
                 };
