@@ -115,10 +115,10 @@ function getPasteEventHandler(insertTextFunc) {
                         console.log("Uploading image...")
                         uploadImage(imageBlob, fname);
                         insertTextFunc("\\begin{figure}[h!]\n\
-    \t\\centering\n\
-    \t\\includegraphics[width=0.66\\textwidth]{" + assetsFolderName + "/" + fname + ".png}\n\
-    \t\\caption{Caption}\n\
-    \\end{figure}\n"
+\t\\centering\n\
+\t\\includegraphics[width=0.66\\textwidth]{" + assetsFolderName + "/" + fname + ".png}\n\
+\t\\caption{Caption}\n\
+\\end{figure}\n"
                                       );
                     };
                 }
