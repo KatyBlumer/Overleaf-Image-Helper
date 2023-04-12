@@ -89,22 +89,6 @@ function getCursorPositionInt() {
     return posInt + cursorPos.column;
 }
 
-// Editor Startup
-(function(e) {
-    try{
-        'use strict';
-        // poll until editor is loaded
-        const retry = setInterval(() => {
-            console.log("Polling...")
-            if (window._debug_editors === undefined) return
-            console.log("Found editors");
-            clearInterval(retry);
-        }, 1000)
-        } catch(e) {
-            console.log(e);
-        }
-})();
-
 function insertTextInLegacyEditor(text) {
     _ide.editorManager.$scope.editor.sharejs_doc.ace.insert(text);
     _ide.editorManager.$scope.editor.sharejs_doc.ace.selection.moveCursorBy(-1,1);
@@ -115,7 +99,6 @@ function insertTextInLegacyEditor(text) {
 function insertTextInNewEditor(text) {
     _ide.editorManager.$scope.editor.sharejs_doc.cm6.cmInsert(getCursorPositionInt(), text);
 }
-
 
 function getPasteEventHandler(insertTextFunc) {
     return function(e) {
@@ -146,11 +129,32 @@ function getPasteEventHandler(insertTextFunc) {
     }
 }
 
-// Listen for paste events
-document.querySelector('.ace_editor').addEventListener(
-    'paste', getPasteEventHandler(insertTextInLegacyEditor)
-);
+// Copied from https://stackoverflow.com/questions/5525071/how-to-wait-until-an-element-exists
+function waitForElm(selector) {
+    return new Promise(resolve => {
+        if (document.querySelector(selector)) {
+            return resolve(document.querySelector(selector));
+        }
+        const observer = new MutationObserver(mutations => {
+            if (document.querySelector(selector)) {
+                resolve(document.querySelector(selector));
+                observer.disconnect();
+            }
+        });
+        observer.observe(document.body, {
+            childList: true,
+            subtree: true
+        });
+    });
+}
 
-document.querySelector('.cm-content').addEventListener(
-    'paste', getPasteEventHandler(insertTextInNewEditor)
-);
+// Listen for paste events
+waitForElm('.ace_editor').then((elm) => {
+    console.log('Found element for legacy editor');
+    elm.addEventListener('paste', getPasteEventHandler(insertTextInLegacyEditor));
+});
+
+waitForElm('.cm-content').then((elm) => {
+    console.log('Found element for new editor');
+    elm.addEventListener('paste', getPasteEventHandler(insertTextInNewEditor));
+});
