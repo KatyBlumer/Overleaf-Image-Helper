@@ -78,6 +78,17 @@ function checkAndCreateAssetsFolder(){
     }
 }
 
+function getCursorPositionInt() {
+    const cursorPos = _ide.editorManager.$scope.currentPosition;
+    const lines = window._ide.editorManager.getCurrentDocValue().split("\n");
+    var posInt = 0;
+    for (let idx = 0; idx < cursorPos.row; idx++) {
+        posInt += lines[idx].length;
+        posInt += 1; // for the newline
+    }
+    return posInt + cursorPos.column;
+}
+
 // Editor Startup
 (function(e) {
     try{
@@ -104,8 +115,7 @@ function insertTextInLegacyEditor(text) {
 
 // Currently this doesn't move the cursor, though the legacy editor function does.
 function insertTextInNewEditor(text) {
-    _ide.editorManager.$scope.editor.sharejs_doc.cm6.dispatch(
-        _ide.editorManager.$scope.editor.sharejs_doc.cm6.state.replaceSelection(text));
+    _ide.editorManager.$scope.editor.sharejs_doc.cm6.cmInsert(getCursorPositionInt(), text);
 }
 
 
