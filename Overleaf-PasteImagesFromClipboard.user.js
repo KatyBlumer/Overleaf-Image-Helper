@@ -96,60 +96,53 @@ function checkAndCreateAssetsFolder(){
         }
 })();
 
+function insertTextInLegacyEditor(text) {
+    _ide.editorManager.$scope.editor.sharejs_doc.ace.insert(text);
+    _ide.editorManager.$scope.editor.sharejs_doc.ace.selection.moveCursorBy(-1,1);
+    _ide.editorManager.$scope.editor.sharejs_doc.ace.selection.selectWordRight()
+}
+
+// Currently this doesn't move the cursor, though the legacy editor function does.
+function insertTextInNewEditor(text) {
+    _ide.editorManager.$scope.editor.sharejs_doc.cm6.dispatch(
+        _ide.editorManager.$scope.editor.sharejs_doc.cm6.state.replaceSelection(text));
+}
+
+
+function getPasteEventHandler(insertTextFunc) {
+    return function(e) {
+        console.log("Got paste!");
+        try {
+            // Handle the event
+            retrieveImageFromClipboardAsBlob(e, function(imageBlob){
+                if(imageBlob){
+                    checkAndCreateAssetsFolder();
+                    var reader = new FileReader();
+                    reader.readAsBinaryString(imageBlob);
+                    reader.onloadend = function () {
+                        var  fname = new Date().toISOString();
+                        console.log("Uploading image...")
+                        uploadImage(imageBlob, fname);
+                        insertTextFunc("\\begin{figure}[h!]\n\
+    \t\\centering\n\
+    \t\\includegraphics[width=0.66\\textwidth]{" + assetsFolderName + "/" + fname + ".png}\n\
+    \t\\caption{Caption}\n\
+    \\end{figure}\n"
+                                      );
+                    };
+                }
+            })
+        } catch (e) {
+            console.log(e);
+        }
+    }
+}
+
 // Listen for paste events
-document.querySelector('.ace_editor').addEventListener('paste', function(e){
-    try {
-        // Handle the event
-        retrieveImageFromClipboardAsBlob(e, function(imageBlob){
-            // Image?
-            if(imageBlob){
-                checkAndCreateAssetsFolder();
-                var reader = new FileReader();
-                reader.readAsBinaryString(imageBlob);
-                reader.onloadend = function () {
-                    var fname = new Date().toISOString();
-                    console.log("Uploading image...")
-                    uploadImage(imageBlob, fname);
-                    _ide.editorManager.$scope.editor.sharejs_doc.ace.insert("\\begin{figure}[h!]\n\
-\t\\centering\n\
-\t\\includegraphics[width=0.9\\textwidth]{" + assetsFolderName + "/" + fname + ".png}\n\
-\t\\caption{Caption}\n\
-\t\\label{fig:screenshot}\n\
-\\end{figure}"
-                                                                           );
-                    _ide.editorManager.$scope.editor.sharejs_doc.ace.selection.moveCursorBy(-1,1);
-                    _ide.editorManager.$scope.editor.sharejs_doc.ace.selection.selectWordRight()
-                };
-            }
-        })
-    } catch (e) {
-        console.log(e);
-    }}
+document.querySelector('.ace_editor').addEventListener(
+    'paste', getPasteEventHandler(insertTextInLegacyEditor)
 );
 
-document.querySelector('.cm-content').addEventListener('paste', function(e){
-    console.log("Got paste!");
-    try {
-        // Handle the event
-        retrieveImageFromClipboardAsBlob(e, function(imageBlob){
-            // Image?
-            if(imageBlob){
-                checkAndCreateAssetsFolder();
-                var reader = new FileReader();
-                reader.readAsBinaryString(imageBlob);
-                reader.onloadend = function () {
-                    var fname = new Date().toISOString();
-                    console.log("Uploading image...")
-                    uploadImage(imageBlob, fname);
-                    _ide.editorManager.$scope.editor.sharejs_doc.cm6.dispatch(_ide.editorManager.$scope.editor.sharejs_doc.cm6.state.replaceSelection("\\begin{figure}[h!]\n\
-\t\\centering\n\
-\t\\includegraphics[width=0.66\\textwidth]{" + assetsFolderName + "/" + fname + ".png}\n\
-\t\\caption{Caption}\n\
-\\end{figure}"));
-                };
-            }
-        })
-    } catch (e) {
-        console.log(e);
-    }}
+document.querySelector('.cm-content').addEventListener(
+    'paste', getPasteEventHandler(insertTextInNewEditor)
 );
