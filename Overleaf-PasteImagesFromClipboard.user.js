@@ -99,8 +99,6 @@ function getCursorPositionInt() {
             if (window._debug_editors === undefined) return
             console.log("Found editors");
             clearInterval(retry);
-            // Create assets folder
-            checkAndCreateAssetsFolder();
         }, 1000)
         } catch(e) {
             console.log(e);
