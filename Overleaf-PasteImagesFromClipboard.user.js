@@ -1,14 +1,18 @@
 // ==UserScript==
-// @name         Overleaf - Paste Images from Clipboard
+// @name         (updated) Overleaf - Paste Images from Clipboard
 // @namespace    http://sebastianhaas.de
 // @version      0.5
 // @description  Paste images from your clipboard directly into Overleaf (Community Edition, Cloud and Pro)
 // @author       Sebastian Haas
 // @match        https://www.overleaf.com/project/*
-// @match        http://192.168.100.239/project/*
 // @require      https://cdnjs.cloudflare.com/ajax/libs/crypto-js/3.1.9-1/crypto-js.js
 // @grant        none
 // ==/UserScript==
+
+// Forked from github.com/devyntk/Overleaf-Image-Helper -> cmprmsd/Overleaf-Image-Helper
+
+
+var assetsFolderName = "images_pasted";
 
 // Parse images from the clipboard
 function retrieveImageFromClipboardAsBlob(pasteEvent, callback){
@@ -42,7 +46,7 @@ function retrieveImageFromClipboardAsBlob(pasteEvent, callback){
 function uploadImage(imageBlob,hash){
     try{
         var xhr = new XMLHttpRequest();
-        var url = document.location.pathname + "/upload?folder_id=" + _ide.fileTreeManager.findEntityByPath("assets").id + "&_csrf=" + csrfToken;
+        var url = document.location.pathname + "/upload?folder_id=" + _ide.fileTreeManager.findEntityByPath(assetsFolderName).id + "&_csrf=" + csrfToken;
         let formData = new FormData();
         formData.append("qqfile", imageBlob, hash + ".png");
         xhr.open("POST", url, true);
@@ -61,13 +65,13 @@ function uploadImage(imageBlob,hash){
 };
 
 function checkAndCreateAssetsFolder(){
-    if (_ide.fileTreeManager.findEntityByPath("assets")){
+    if (_ide.fileTreeManager.findEntityByPath(assetsFolderName)){
         console.log("Assets folder exists...")
     }
     else {
         console.log("Assets folder does not exist...")
         try {
-            _ide.fileTreeManager.createFolder("assets","/");
+            _ide.fileTreeManager.createFolder(assetsFolderName,"/");
         } catch(e) {
             console.log(e);
         }
@@ -108,7 +112,7 @@ document.querySelector('.ace_editor').addEventListener('paste', function(e){
                     uploadImage(imageBlob,hash);
                     _ide.editorManager.$scope.editor.sharejs_doc.ace.insert("\\begin{figure}[h!]\n\
 \t\\centering\n\
-\t\\includegraphics[width=0.9\\textwidth]{assets/" + hash + ".png}\n\
+\t\\includegraphics[width=0.9\\textwidth]{" + assetsFolderName + "/" + hash + ".png}\n\
 \t\\caption{Caption}\n\
 \t\\label{fig:screenshot}\n\
 \\end{figure}"
@@ -139,7 +143,7 @@ document.querySelector('.cm-content').addEventListener('paste', function(e){
                     uploadImage(imageBlob,hash);
                     _ide.editorManager.$scope.editor.sharejs_doc.cm6.dispatch(_ide.editorManager.$scope.editor.sharejs_doc.cm6.state.replaceSelection("\\begin{figure}[h!]\n\
 \t\\centering\n\
-\t\\includegraphics[width=0.66\\textwidth]{assets/" + hash + ".png}\n\
+\t\\includegraphics[width=0.66\\textwidth]{" + assetsFolderName + "/" + hash + ".png}\n\
 \t\\caption{Caption}\n\
 \\end{figure}"));
                 };
