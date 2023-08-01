@@ -3,13 +3,14 @@
 // @namespace    http://sebastianhaas.de
 // @version      0.5
 // @description  Paste images from your clipboard directly into Overleaf (Community Edition, Cloud and Pro)
-// @author       Sebastian Haas
+// @author       Sebastian Haas, Katy Blumer, devyntk, Benjamin Lumbye
 // @match        https://www.overleaf.com/project/*
 // @require      https://cdnjs.cloudflare.com/ajax/libs/crypto-js/3.1.9-1/crypto-js.js
 // @grant        none
 // ==/UserScript==
 
 // Forked from github.com/devyntk/Overleaf-Image-Helper -> cmprmsd/Overleaf-Image-Helper
+// Edits to work with new (2023) version of Overleaf from github.com/BLumbye/overleaf-userscripts
 
 
 var assetsFolderName = "images_pasted";
@@ -43,24 +44,33 @@ function retrieveImageFromClipboardAsBlob(pasteEvent, callback){
 }
 
 // Upload the image blob
-function uploadImage(imageBlob, fname){
-    try{
-        var xhr = new XMLHttpRequest();
-        var url = document.location.pathname + "/upload?folder_id=" + _ide.fileTreeManager.findEntityByPath(assetsFolderName).id + "&_csrf=" + csrfToken;
-        let formData = new FormData();
-        formData.append("qqfile", imageBlob, fname + ".png");
-        xhr.open("POST", url, true);
-        //xhr.setRequestHeader("Content-Type", "application/json");
-        xhr.onreadystatechange = function () {
-            if (xhr.readyState === 4 && xhr.status === 200) {
-                var json = JSON.parse(xhr.responseText);
-                console.log(json.entity_id + " Asset created :)");
-            }
-        };
-        xhr.send(formData);
-    }catch(e)
-    {
-        console.log(e)
+async function uploadImage(imageBlob, fname){
+
+    const headers = new Headers();
+    headers.append('x-csrf-token', csrfToken);
+
+    const formData = new FormData();
+    formData.append('relativePath', null);
+    formData.append('name', fname + ".png");
+    formData.append('type', 'image/png');
+    formData.append("qqfile", imageBlob, fname + ".png");
+
+    try {
+        const result = await fetch(
+          `${document.location.pathname}/upload?` +
+            new URLSearchParams({
+              folder_id: _ide.fileTreeManager.findEntityByPath(assetsFolderName).id,
+            }),
+          {
+            method: 'POST',
+            body: formData,
+            headers,
+          },
+        );
+        const json = await result.json();
+        console.log('Pasted image asset uploaded, entity id:', json.entity_id);
+    } catch (e) {
+        console.log(e);
     }
 };
 
